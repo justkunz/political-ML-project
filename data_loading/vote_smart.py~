@@ -1,0 +1,6 @@
+import json
+import urllib
+
+results = json.load(urllib.urlopen("https://www.kimonolabs.com/api/e2fewd6y?apikey=uJtZym147qhHh0poD2oh0dqNkjaVs7Y4"));
+
+print results;

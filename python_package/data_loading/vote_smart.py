@@ -1,3 +1,4 @@
+from config import POLITICIANS, DATA_FILEPATH
 import json
 import urllib
 import re
@@ -6,34 +7,38 @@ from progressbar import ProgressBar
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-# TODO: make this less hard-coded
-#from . import POLITICIANS
-POLITICIANS = Series(["Terri Lynn Land", "Rick Snyder", "Bill Schuette", "Ruth Johnson", "Gary Peters", "Mark Schauer", "Mark Totten", "Godfrey Dillard"])
-
 TEXT_KEY = "text"
 POLITICIAN_KEY = "politician"
 TITLE_KEY = "title"
 
-DATA_FILEPATH = "../data/vote_smart/"
-HREF_FILE = DATA_FILEPATH + "politician_issue_links.txt"
-RESULTS_FILE = DATA_FILEPATH + "scrape_results.csv"
+VOTE_SMART_PATH = DATA_FILEPATH + "vote_smart/"
+HREF_FILE = VOTE_SMART_PATH + "politician_issue_links.txt"
+RESULTS_FILE = VOTE_SMART_PATH + "scrape_results.csv"
 
 
 def get_formatted_row(json_result):
 
   results = json_result["results"]
   
-  # parse the issue title
   try:
+    # parse the issue title
     issue_title = results["collection2"][0][TITLE_KEY]
+  
+    # parse the text from the issue statement
+    issue_text = [row[TEXT_KEY] for row in results["collection1"]]
+  
   except KeyError as e:
-    logging.warning(e.strerror)
+    logging.warning(e)
+    logging.warning(results.keys())
+    logging.warning(results)
     return DataFrame()
 
-  # parse the text from the issue statement
-  issue_text = [row[TEXT_KEY] for row in results["collection1"]]
-  issue_text = "".join(issue_text)
-
+  try:
+    issue_text = " ".join(issue_text)
+  except TypeError as e:
+    logging.warning(e)
+    print issue_text
+    
   # parse the contributors (only consider contributors in the politicians list)
   contributors = [row[POLITICIAN_KEY]["text"] for row in results["collection3"]]
   contributors = [contributor for contributor in contributors if contributor in POLITICIANS.values]
@@ -45,6 +50,7 @@ def get_formatted_row(json_result):
     pd_result = pd_result.append({TITLE_KEY: issue_title, TEXT_KEY: issue_text, \
       POLITICIAN_KEY: contributor}, ignore_index=True)
 
+  assert(len(pd_result) == len(contributors))
   return pd_result
 
 
@@ -70,6 +76,9 @@ def scrape_kimono_labs():
         + "apikey=uJtZym147qhHh0poD2oh0dqNkjaVs7Y4" \
         + "&kimpath1=public-statement&kimpath2=" + str(kimpath2) \
         + "&kimpath3=" + kimpath3
+      
+      if (kimpath2 == 731103):
+        print "HHEEEEEEEERRRRRRREEEEEEE"
     
       # get the vote smart results from the Kimono Labs api
       # and append them to the DataFrame
@@ -92,7 +101,8 @@ def main():
   # reformat the contributors column
   issues_table = scrape_kimono_labs()
 
-  issues_table.to_csv(RESULTS_FILE)
+  # save the results to a file
+  issues_table.to_csv(RESULTS_FILE, encoding="utf-8")
   
 
 main();

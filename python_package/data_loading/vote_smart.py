@@ -76,9 +76,6 @@ def scrape_kimono_labs():
         + "apikey=uJtZym147qhHh0poD2oh0dqNkjaVs7Y4" \
         + "&kimpath1=public-statement&kimpath2=" + str(kimpath2) \
         + "&kimpath3=" + kimpath3
-      
-      if (kimpath2 == 731103):
-        print "HHEEEEEEEERRRRRRREEEEEEE"
     
       # get the vote smart results from the Kimono Labs api
       # and append them to the DataFrame
@@ -89,7 +86,7 @@ def scrape_kimono_labs():
       logging.warning("Unable to get results for: " + href)
   
     # TODO: remove this
-    results_table.to_csv(RESULTS_FILE, encoding="utf-8")
+    results_table.to_csv(RESULTS_FILE, encoding="utf-8", index=False)
   
     pbar.update(i+1)
 
@@ -102,7 +99,7 @@ def main():
   issues_table = scrape_kimono_labs()
 
   # save the results to a file
-  issues_table.to_csv(RESULTS_FILE, encoding="utf-8")
+  issues_table.to_csv(RESULTS_FILE, encoding="utf-8", index=False)
   
 
 main();

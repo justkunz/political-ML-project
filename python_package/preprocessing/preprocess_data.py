@@ -1,6 +1,7 @@
 from config import MERGED_DATA_PATH, CLEANED_DATA_PATH, POLITICAL_JARGON_PATH
 from pandas import DataFrame, Series
 import pandas as pd
+from stemming.porter2 import stem
 import string
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -42,6 +43,9 @@ def main():
     # remove any political jargon terms
     merged_data[col] = merged_data[col].apply(lambda text: " ".join([word for word
       in text.split() if word not in political_jargon]))
+  
+    # stem all of the terms
+    merged_data[col] = merged_data[col].apply(lambda text: " ".join([stem(word) for word in text.split()]))
   
   merged_data.to_csv(CLEANED_DATA_PATH, index=False)
   logging.info("Saved cleaned data to %s", CLEANED_DATA_PATH)

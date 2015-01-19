@@ -5,7 +5,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 DATA_PATH = "../../data/"
-DATA_SOURCES = ["vote_smart/scrape_results.csv"]
+DATA_NAME = "scrape_results.csv"
+DATA_SOURCES = ["vote_smart/", "political_websites/"]
 
 def main():
 
@@ -13,7 +14,7 @@ def main():
   
   # loop through all of the data sources and append one large DataFrame
   for data_file in DATA_SOURCES:
-    merged_data = merged_data.append(pd.read_csv(DATA_PATH + data_file))
+    merged_data = merged_data.append(pd.read_csv(DATA_PATH + data_file + DATA_NAME))
 
   # save the merged result to the preprocessing folder
   merged_data.to_csv(MERGED_DATA_PATH, index=False)

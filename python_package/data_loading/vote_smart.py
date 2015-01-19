@@ -1,4 +1,4 @@
-from config import POLITICIANS, DATA_FILEPATH
+from config import POLITICIANS, DATA_FILEPATH, TEXT_KEY, POLITICIAN_KEY
 import json
 import urllib
 import re
@@ -7,8 +7,6 @@ from progressbar import ProgressBar
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-TEXT_KEY = "text"
-POLITICIAN_KEY = "politician"
 TITLE_KEY = "title"
 
 VOTE_SMART_PATH = DATA_FILEPATH + "vote_smart/"
@@ -18,8 +16,13 @@ RESULTS_FILE = VOTE_SMART_PATH + "scrape_results.csv"
 
 def get_formatted_row(json_result):
 
-  results = json_result["results"]
-  
+  try:
+    results = json_result["results"]
+  except KeyError as e:
+    logging.debug(json_result)
+    logging.warning(e)
+    return DataFrame()
+    
   try:
     # parse the issue title
     issue_title = results["collection2"][0][TITLE_KEY]
@@ -29,25 +32,27 @@ def get_formatted_row(json_result):
   
   except KeyError as e:
     logging.warning(e)
-    logging.warning(results.keys())
-    logging.warning(results)
+    logging.debug(results.keys())
+    logging.debug(results)
     return DataFrame()
 
   try:
     issue_text = " ".join(issue_text)
+    issue_text = issue_title + " " + issue_text
   except TypeError as e:
     logging.warning(e)
-    print issue_text
     
   # parse the contributors (only consider contributors in the politicians list)
   contributors = [row[POLITICIAN_KEY]["text"] for row in results["collection3"]]
   contributors = [contributor for contributor in contributors if contributor in POLITICIANS.values]
+
+  assert(len(contributors) > 0)
   
   pd_result = DataFrame()
 
   # add an entry for each contributor
   for contributor in contributors:
-    pd_result = pd_result.append({TITLE_KEY: issue_title, TEXT_KEY: issue_text, \
+    pd_result = pd_result.append({TEXT_KEY: issue_text, \
       POLITICIAN_KEY: contributor}, ignore_index=True)
 
   assert(len(pd_result) == len(contributors))
@@ -85,9 +90,6 @@ def scrape_kimono_labs():
     except ValueError:
       logging.warning("Unable to get results for: " + href)
   
-    # TODO: remove this
-    results_table.to_csv(RESULTS_FILE, encoding="utf-8", index=False)
-  
     pbar.update(i+1)
 
   pbar.finish()
@@ -100,6 +102,7 @@ def main():
 
   # save the results to a file
   issues_table.to_csv(RESULTS_FILE, encoding="utf-8", index=False)
+  logging.info("Saved %d scraped vote smart records to %s", len(issues_table), RESULTS_FILE)
   
 
 main();
